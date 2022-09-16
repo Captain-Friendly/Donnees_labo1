@@ -35,24 +35,20 @@ module.exports =
             return false;
         }
 
-        /**
-         * checks if there are extra parameters
-         * @param { Array } nbParams 
-         */
         checkParamsCount(nbParams){
-            if(nbParams.includes("x") && nbParams.includes("y") && Object.keys(this.params).length != 3) { 
+            if(Object.keys(this.params).length != nbParams) { 
                 this.error("invalid number of parameters"); 
                 return false;
             }
-            else if(nbParams.includes("n") && Object.keys(this.params).length != 2) {
-                this.error("invalid number of parameters");
-                return false;
-            } 
+            // else if(nbParams.includes("n") && Object.keys(this.params).length != 2) {
+            //     this.error("invalid number of parameters");
+            //     return false;
+            // } 
             return true;
         }
         
         getBinaryParams(){
-            if(this.checkParamsCount(["x","y"])){
+            if(this.checkParamsCount(3)){
                 if (this.convertNumberParamsToFloat("y")){
                     if(this.convertNumberParamsToFloat("x")){
                         return true;
@@ -64,14 +60,14 @@ module.exports =
         }
         
         getUnaryParams(){
-            if(this.checkParamsCount(["n"])){
+            if(this.checkParamsCount(2)){
                 if(this.convertNumberParamsToFloat("n")){
                     return true;
                 }
             }
             return false;
         }
-        a
+        
         help(){
             let helpPagesPath = path.join(process.cwd(), "wwwroot/helpPages/mathsServiceHelp.html");
             let content = fs.readFileSync(helpPagesPath);
@@ -145,64 +141,67 @@ module.exports =
             this.result(primeNumer);
         }
 
+        doOperation(){
+            if(this.params.op){
+                let operation = this.params.op;
+
+                switch(operation) {
+                    case ' ':
+                        if(this.getBinaryParams()){
+                            this.addition(this.params.x, this.params.y);
+                        };
+                        break;
+                    case '-':
+                        if(this.getBinaryParams()){
+                            this.soustraction(this.params.x, this.params.y);
+                        }
+                        break;
+                    case '*':
+                        if(this.getBinaryParams()){
+                            this.multiplication(this.params.x, this.params.y);
+                        }
+                        break;
+                    case '/':
+                        if(this.getBinaryParams()){
+                            this.division(this.params.x, this.params.y);
+                        }
+                        break;
+                    case '%':
+                        if(this.getBinaryParams()){
+                            this.modulo(this.params.x, this.params.y);
+                        }
+                        break;
+                    case 'p':
+                        if(this.getUnaryParams()){
+                            this.result(this.isPrime(this.params.n));
+                        }
+                        break;
+                    case 'np':
+                        if(this.getUnaryParams()){
+                            this.findPrime(this.params.n);
+                        }
+                        break;
+                    case '!':
+                        if(this.getUnaryParams()){
+                            this.result(this.factorial(this.params.n));
+                        }
+                        break;
+                    default:
+                        this.error("this opperation is not valide")
+
+                }
+
+            }else{
+                this.params.error = "parameter 'op' is missing";
+                this.HttpContext.response.JSON(this.HttpContext.path.params);
+            }
+        }
         get() {
             if(this.HttpContext.path.queryString == '?'){
                 this.help();
             }else{
 
-                if(this.params.op){
-                    let operation = this.params.op;
-
-                    switch(operation) {
-                        case ' ':
-                            if(this.getBinaryParams()){
-                                this.addition(this.params.x, this.params.y);
-                            };
-                            break;
-                        case '-':
-                            if(this.getBinaryParams()){
-                                this.soustraction(this.params.x, this.params.y);
-                            }
-                            break;
-                        case '*':
-                            if(this.getBinaryParams()){
-                                this.multiplication(this.params.x, this.params.y);
-                            }
-                            break;
-                        case '/':
-                            if(this.getBinaryParams()){
-                                this.division(this.params.x, this.params.y);
-                            }
-                            break;
-                        case '%':
-                            if(this.getBinaryParams()){
-                                this.modulo(this.params.x, this.params.y);
-                            }
-                            break;
-                        case 'p':
-                            if(this.getUnaryParams()){
-                                this.result(this.isPrime(this.params.n));
-                            }
-                            break;
-                        case 'np':
-                            if(this.getUnaryParams()){
-                                this.findPrime(this.params.n);
-                            }
-                            break;
-                        case '!':
-                            if(this.getUnaryParams()){
-                                this.result(this.factorial(this.params.n));
-                            }
-                            break;
-                        default:
-                            this.error("this opperation is not valide")
-
-                    }
-
-                }else{
-                    this.params.error = "parameter 'op' is missing";
-                    this.HttpContext.response.JSON(this.HttpContext.path.params);
-                }
+                this.doOperation();
             }
         }
     }
