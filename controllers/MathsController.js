@@ -119,7 +119,7 @@ module.exports =
 
         modulo(x,y){
             if(y == 0){
-                this.error("divison by zero");
+                this.error("can't modulo by 0");
             }else{
                 let result = x % y;
                 this.result(result);
