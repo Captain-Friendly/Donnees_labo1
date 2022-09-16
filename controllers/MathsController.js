@@ -1,16 +1,11 @@
 const path = require('path');
 const fs = require('fs');
-const Validité = {
-    valid : true,
-    invalid : false,
-}
+
 module.exports =
     class MathsController extends require('./Controller') {
         constructor(HttpContext) {
             super(HttpContext);
             this.params = this.HttpContext.path.params;
-            // this.valid = true;
-            // this.invalid = false;
         }
 
         // cannot set headers after they are sent to the client
@@ -25,19 +20,19 @@ module.exports =
             let value = parseFloat(n);
             if(!isNaN(value)){ 
                 this.params[name] = value;
-                return Validité.valid;
+                return true;
             }
             else{ 
                 this.error(`${name} is not a valid number`);
-                return Validité.invalid;
+                return false;
             }
         }
 
         isPositiveNumber(name){
             if(this.params[name] > 0 && !isNaN(this.params[name])){
-                Validité.valid;
+                true;
             }
-            return Validité.invalid;
+            return false;
         }
 
         /**
@@ -47,39 +42,36 @@ module.exports =
         checkParamsCount(nbParams){
             if(nbParams.includes("x") && nbParams.includes("y") && Object.keys(this.params).length != 3) { 
                 this.error("invalid number of parameters"); 
-                return Validité.invalid;
+                return false;
             }
             else if(nbParams.includes("n") && Object.keys(this.params).length != 2) {
                 this.error("invalid number of parameters");
-                return Validité.invalid;
+                return false;
             } 
-            return Validité.valid;
+            return true;
         }
         
         getBinaryParams(){
             if(this.checkParamsCount(["x","y"])){
                 if (this.convertNumberParamsToFloat("y")){
                     if(this.convertNumberParamsToFloat("x")){
-                        return Validité.valid;
+                        return true;
                     }
                 };
             }
-            return Validité.invalid;
+            return false;
             
         }
         
         getUnaryParams(){
             if(this.checkParamsCount(["n"])){
                 if(this.convertNumberParamsToFloat("n")){
-                    return Validité.valid;
+                    return true;
                 }
             }
-            return Validité.invalid;
+            return false;
         }
-        
-
-        
-
+        a
         help(){
             let helpPagesPath = path.join(process.cwd(), "wwwroot/helpPages/mathsServiceHelp.html");
             let content = fs.readFileSync(helpPagesPath);
