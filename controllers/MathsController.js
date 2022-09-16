@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const MathUtilities = require('../MathUtilities');
 
 module.exports =
     class MathsController extends require('./Controller') {
@@ -16,23 +17,23 @@ module.exports =
         }
         
         convertNumberParamsToFloat(name){
-            let n  = this.params[name];
-            let value = parseFloat(n);
-            if(!isNaN(value)){ 
+            if(name in this.params){
+                let value = parseFloat(this.params[name]);
+                if(isNaN(value)){ 
+                    this.error(`${name} is not a valid number`);
+                    return false;
+                }
                 this.params[name] = value;
-                return true;
-            }
-            else{ 
-                this.error(`${name} is not a valid number`);
-                return false;
-            }
+                    return true;
+            }else 
+                return this.error(name + "parameter missing")
         }
 
-        isPositiveNumber(name){
-            if(this.params[name] > 0 && !isNaN(this.params[name])){
-                true;
+        isPositiveInteger(name, value) {
+            if (!(Number.isInteger(value) && (value > 0))) {
+                return this.error(name + " parameter must be an integer > 0");
             }
-            return false;
+            return true;
         }
 
         checkParamsCount(nbParams){
@@ -48,15 +49,11 @@ module.exports =
         }
         
         getBinaryParams(){
-            if(this.checkParamsCount(3)){
-                if (this.convertNumberParamsToFloat("y")){
-                    if(this.convertNumberParamsToFloat("x")){
-                        return true;
-                    }
-                };
-            }
-            return false;
-            
+            return (
+                this.checkParamsCount(3) && 
+                this.convertNumberParamsToFloat("y") && 
+                this.convertNumberParamsToFloat("x")
+            );
         }
         
         getUnaryParams(){
@@ -69,9 +66,8 @@ module.exports =
         }
         
         help(){
-            let helpPagesPath = path.join(process.cwd(), "wwwroot/helpPages/mathsServiceHelp.html");
-            let content = fs.readFileSync(helpPagesPath);
-            this.HttpContext.response.content("text/html", content);
+            let helpPagesPath = path.join(process.cwd(), wwwroot,"helpPages/mathsServiceHelp.html");
+            this.HttpContext.response.HTML(fs.readFileSync(helpPagesPath));
         }
 
         result(value){
@@ -79,16 +75,16 @@ module.exports =
             this.HttpContext.response.JSON(this.params);
         }
         
-        addition(x,y){
-            let result = x + y;
-            this.params.op = "+";
-            this.result(result);
-        }
+        // addition(x,y){
+        //     let result = x + y;
+        //     this.params.op = "+";
+        //     this.result(result);
+        // }
 
-        soustraction(x,y){
-            let result = x - y;
-            this.result(result);
-        }
+        // soustraction(x,y){
+        //     let result = x - y;
+        //     this.result(result);
+        // }
 
         multiplication(x,y){
             let result = x * y;
@@ -147,54 +143,47 @@ module.exports =
 
                 switch(operation) {
                     case ' ':
-                        if(this.getBinaryParams()){
-                            this.addition(this.params.x, this.params.y);
-                        };
+                        if(this.getBinaryParams())
+                            this.result(this.params.x + this.params.y);
                         break;
                     case '-':
-                        if(this.getBinaryParams()){
-                            this.soustraction(this.params.x, this.params.y);
-                        }
+                        if(this.getBinaryParams())
+                            this.result(this.params.x - this.params.y);
                         break;
                     case '*':
-                        if(this.getBinaryParams()){
-                            this.multiplication(this.params.x, this.params.y);
-                        }
+                        if(this.getBinaryParams())
+                            this.result(this.params.x * this.params.y);
                         break;
                     case '/':
-                        if(this.getBinaryParams()){
-                            this.division(this.params.x, this.params.y);
-                        }
+                        if(this.getBinaryParams())
+                            this.result(this.params.x / this.params.y);
                         break;
                     case '%':
-                        if(this.getBinaryParams()){
-                            this.modulo(this.params.x, this.params.y);
-                        }
+                        if(this.getBinaryParams())
+                            this.result(this.params.x % this.params.y);
                         break;
                     case 'p':
-                        if(this.getUnaryParams()){
-                            this.result(this.isPrime(this.params.n));
-                        }
+                        if(this.getUnaryParams())
+                            if(this.isPositiveInteger('n', this.params.n))
+                                this.result(MathUtilities.isPrime(this.params.n));
                         break;
                     case 'np':
-                        if(this.getUnaryParams()){
-                            this.findPrime(this.params.n);
-                        }
+                        if (this.getUnaryParams())
+                            if (this.isPositiveInteger('n', this.params.n))
+                                this.result(MathUtilities.findPrime(this.params.n));
                         break;
                     case '!':
-                        if(this.getUnaryParams()){
-                            this.result(this.factorial(this.params.n));
-                        }
+                        if (this.getUnaryParams())
+                            if (this.isPositiveInteger('n', this.params.n))
+                                this.result(MathUtilities.factorial(this.params.n));
                         break;
                     default:
-                        this.error("this opperation is not valide")
+                        return this.error("this opperation is not valide");
 
                 }
 
-            }else{
-                this.params.error = "parameter 'op' is missing";
-                this.HttpContext.response.JSON(this.HttpContext.path.params);
-            }
+            }else
+                return this.error("'op' parameter is missing");
         }
         get() {
             if(this.HttpContext.path.queryString == '?'){

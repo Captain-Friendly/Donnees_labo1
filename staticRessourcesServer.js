@@ -8,7 +8,7 @@
 const path = require('path');
 const fs = require('fs');
 const mimes = require('./mimes.json');
-let wwwroot = 'wwwroot';
+global.wwwroot = 'wwwroot';
 let defaultRessource = 'index.html';
 
 function isDirectory(url) {
